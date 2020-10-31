@@ -1,7 +1,6 @@
 #pragma once
 #include <cstddef>
 
-
 namespace task {
 
 
@@ -11,6 +10,7 @@ public:
 
     list();
     list(size_t count, const int& value = int());
+    list(const list& other);
 
     ~list();
     list& operator=(const list& other);
@@ -40,11 +40,27 @@ public:
     void unique();
     void sort();
 
-    // Your code goes here?..
-
 private:
 
-    // Your code goes here...
+    bool operator ==(const list& other) const;
+    
+    bool push_one(const int& value);
+    bool pop_one();
+    template <typename T> void My_Swap(T& x, T& y);
+
+    struct node {
+        node* prev_node = nullptr;
+        node* next_node = nullptr;
+        int value;
+        node();
+        node(const node& other);
+        node(int _value);
+        ~node();
+    };
+
+    node* head;
+    node* tail;
+    size_t list_size;
 
 };
 
