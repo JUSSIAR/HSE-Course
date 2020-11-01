@@ -1,25 +1,17 @@
 #include "list.h"
 
 task::list::list() {
-    head = new node();
-    tail = this->head;
-    list_size = 0;
+    init();
 }
 
 task::list::list(size_t count, const int& value) {
-    head = new node();
-    tail = this->head;
-    this->list_size = 0;
-    if (count == 0)
-        return;
+    init();
     for (size_t i = 0; i < count; ++i)
         this->push_back(value);
 }
 
 task::list::list(const list& other) {
-    head = new node();
-    tail = this->head;
-    this->list_size = 0;
+    init();
     node* tmp_ptr = other.head;
     while (tmp_ptr != other.tail) {
         this->push_back(tmp_ptr->value);
@@ -28,13 +20,13 @@ task::list::list(const list& other) {
 }
 
 task::list::~list() {
-    /*node* to_del = this->head;
+    node* to_del = this->head;
     for (node* tmp_ptr = to_del; tmp_ptr != this->tail; ) {
         tmp_ptr = tmp_ptr->next_node;
         delete to_del;
         to_del = tmp_ptr;
     }
-    delete to_del;*/
+    delete to_del;
 }
 
 task::list& task::list::operator =(const list& other) {
@@ -212,6 +204,11 @@ void task::list::sort() {
     }
 }
 
+void task::list::init() {
+    this->head = new node();
+    this->tail = this->head;
+    this->list_size = 0;
+}
 
 bool task::list::operator ==(const list& other) const {
     if (this->size() != other.size())
@@ -262,11 +259,12 @@ template <typename T> void task::list::My_Swap(T& x, T& y) {
 
 task::list::node::node() = default;
 task::list::node::~node() = default;
-task::list::node::node(const node& other) = default; /*{
+
+task::list::node::node(const node& other) {
     this->value = other.value;
     this->next_node = other.next_node;
     this->prev_node = other.prev_node;
-}*/
+}
 
 task::list::node::node(int _value) {
     this->value = _value;
