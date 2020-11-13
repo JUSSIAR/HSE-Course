@@ -64,7 +64,7 @@ BigInteger& BigInteger::operator %=(const BigInteger& other) {
     bool _sign = sign ^ _other.sign;
     sign = false;
     _other.sign = false;
-    (*this) -= ((*this) / _other) * _other;
+    (*this) -= multiplication(division((*this), _other), _other);
     sign = _sign && (toString() != "0");
     return (*this);
 }
@@ -99,8 +99,8 @@ BigInteger BigInteger::operator %(const BigInteger& other) {
     return copy;
 }
 
-BigInteger BigInteger::operator -() {
-    BigInteger copy = *this;
+BigInteger BigInteger::operator -() const {
+    BigInteger copy(*this);
     copy.sign ^= true;
     return copy;
 }
@@ -127,29 +127,38 @@ BigInteger BigInteger::operator --(int) {
     return copy;
 }
 
-bool BigInteger::operator <(const BigInteger& other) {
-    if (digits.size() != other.digits.size())
-        return digits.size() < other.digits.size();
-    return digits < other.digits;
+bool BigInteger::operator <(const BigInteger& other) const {
+    if (sign == other.sign) {
+        if (!sign) {
+            if (digits.size() != other.digits.size())
+                return digits.size() < other.digits.size();
+            return digits < other.digits;
+        } else {
+            if (digits.size() != other.digits.size())
+                return digits.size() > other.digits.size();
+            return digits > other.digits;
+        }
+    }
+    return sign;
 }
 
-bool BigInteger::operator >(const BigInteger& other) {
+bool BigInteger::operator >(const BigInteger& other) const {
     return (!((*this) < other) && !((*this) == other));
 }
 
-bool BigInteger::operator <=(const BigInteger& other) {
+bool BigInteger::operator <=(const BigInteger& other) const {
     return (((*this) < other) || ((*this) == other));
 }
 
-bool BigInteger::operator >=(const BigInteger& other) {
+bool BigInteger::operator >=(const BigInteger& other) const {
     return (((*this) > other) || ((*this) == other));
 }
 
-bool BigInteger::operator ==(const BigInteger& other) {
-     return (!((*this) < other) && !(other < (*this)));
+bool BigInteger::operator ==(const BigInteger& other) const {
+    return (!((*this) < other) && !(other < (*this)));
 }
 
-bool BigInteger::operator !=(const BigInteger& other) {
+bool BigInteger::operator !=(const BigInteger& other) const {
     return (!((*this) == other));
 }
 
@@ -187,9 +196,8 @@ void BigInteger::remove_zeroes(BigInteger& temp) {
 }
 
 void BigInteger::mult_power(BigInteger& temp, int step) {
-    if (temp.toString() != "0")
-        while (step--)
-            temp.digits.push_back('0');
+    while (step--)
+        temp.digits.push_back('0');
 }
 
 template <typename T> void BigInteger::reverse_vector(std::vector <T>& vect) {
@@ -205,6 +213,8 @@ void BigInteger::convert(std::string number) {
 }
 
 BigInteger BigInteger::addition(BigInteger A, BigInteger B) {
+    remove_zeroes(A);
+    remove_zeroes(B);
     if (A.digits.size() < B.digits.size())
         std::swap(A, B);
     reverse_vector(A.digits);
@@ -216,7 +226,7 @@ BigInteger BigInteger::addition(BigInteger A, BigInteger B) {
     int p = 0;
     for (size_t i = 0; i < C.digits.size(); ++i) {
         int tmp = p + A.digits[i] - '0' + B.digits[i] - '0';
-        C.digits[i] = tmp % 10 + '0';
+        C.digits[i] = (tmp % 10) + '0';
         p = tmp / 10;
     }
     reverse_vector(C.digits);
@@ -225,6 +235,8 @@ BigInteger BigInteger::addition(BigInteger A, BigInteger B) {
 }
 
 BigInteger BigInteger::subtraction(BigInteger A, BigInteger B) {
+    remove_zeroes(A);
+    remove_zeroes(B);
     reverse_vector(A.digits);
     reverse_vector(B.digits);
     mult_power(B, A.digits.size() - B.digits.size());
@@ -239,9 +251,11 @@ BigInteger BigInteger::subtraction(BigInteger A, BigInteger B) {
         while (it < C.digits.size() && A.digits[it] == '0')
             ++it;
         A.digits[i] += 10;
-        A.digits[it--] -= 1;
-        while (it != i)
-            A.digits[it--] = '9';
+        A.digits[it] -= 1; it--;
+        while (it != i) {
+            A.digits[it] = '9';
+            it--;
+        }
         C.digits[i] = A.digits[i] - B.digits[i] + '0';
     }
     reverse_vector(C.digits);
@@ -257,29 +271,34 @@ BigInteger BigInteger::multiplication(BigInteger A, BigInteger B) {
         mult_power(B, A.digits.size() - B.digits.size());
         reverse_vector(B.digits);
     }
-    if ((A.digits.size() == 1) && (B.digits.size() == 1)) {
+    if (A.digits.size() == 1) {
         BigInteger C = 0;
         for (BigInteger i = 0; i < A; i = i + BigInteger(1))
-            C += B;
+            C = addition(C, B);
+        remove_zeroes(C);
         return C;
     }
-    int m1 = static_cast<int>(A.digits.size() / 2);
-    int m2 = static_cast<int>((A.digits.size() + 1) / 2);
-    BigInteger A1;
-    A1.convert(A.toString().substr(0, m1));
-    BigInteger A0;
-    A0.convert(A.toString().substr(m1, m2));
-    BigInteger B1;
-    B1.convert(B.toString().substr(0, m1));
-    BigInteger B0;
-    B0.convert(B.toString().substr(m1, m2));
-    BigInteger C1 = A0 * B0;
-    BigInteger C2 = A1 * B1;
-    BigInteger C3 = (A0 + A1) * (B0 + B1);
-    C3 = C3 - (C1 + C2);
-    mult_power(C2, 2 * m2);
-    mult_power(C3, m2);
-    BigInteger C = C1 + C2 + C3;
+    if (A.digits.size() & 1) {
+        reverse_vector(A.digits);
+        reverse_vector(B.digits);
+        mult_power(A, 1);
+        mult_power(B, 1);
+        reverse_vector(A.digits);
+        reverse_vector(B.digits);
+    }
+    int m = static_cast<int>(A.digits.size() / 2);
+    BigInteger A1, A0, B1, B0;
+    A1.convert(A.toString().substr(0, m)); remove_zeroes(A1);
+    A0.convert(A.toString().substr(m, m)); remove_zeroes(A0);
+    B1.convert(B.toString().substr(0, m)); remove_zeroes(B1);
+    B0.convert(B.toString().substr(m, m)); remove_zeroes(B0);
+    BigInteger C1 = multiplication(A0, B0); 
+    BigInteger C2 = multiplication(A1, B1);
+    BigInteger C3 = multiplication(addition(A0, A1), addition(B0, B1));
+    C3 = subtraction(C3, addition(C1, C2));
+    mult_power(C2, m * 2);
+    mult_power(C3, m);
+    BigInteger C = addition(addition(C1, C2), C3);
     remove_zeroes(C);
     return C;
 }

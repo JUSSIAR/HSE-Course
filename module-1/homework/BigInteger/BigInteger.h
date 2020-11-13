@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <assert.h>
 
 class BigInteger
 {
@@ -26,7 +27,7 @@ class BigInteger
 		BigInteger operator /(const BigInteger& other);
 		BigInteger operator %(const BigInteger& other);
 
-		BigInteger operator -();
+		BigInteger operator -() const;
 
 		BigInteger& operator ++();
 		BigInteger& operator --();
@@ -34,12 +35,12 @@ class BigInteger
 		BigInteger operator ++(int);
 		BigInteger operator --(int);
 
-		bool operator ==(const BigInteger& other);
-		bool operator !=(const BigInteger& other);
-		bool operator <(const BigInteger& other);
-		bool operator >(const BigInteger& other);
-		bool operator <=(const BigInteger& other);
-		bool operator >=(const BigInteger& other);
+		bool operator ==(const BigInteger& other) const;
+		bool operator !=(const BigInteger& other) const;
+		bool operator <(const BigInteger& other) const;
+		bool operator >(const BigInteger& other) const;
+		bool operator <=(const BigInteger& other) const;
+		bool operator >=(const BigInteger& other) const;
 
 		std::string toString();
 
