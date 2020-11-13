@@ -106,12 +106,38 @@ BigInteger BigInteger::operator -() const {
 }
 
 BigInteger& BigInteger::operator ++() {
-    (*this) += 1;
+    if (sign) {
+        sign ^= true;
+        --(*this);
+        sign ^= true;
+    } else {
+        int digit = digits.size() - 1;
+        while (digit > 0 && digits[digit] == '9')
+            digits[digit--] = '0';
+        if (digit == -1) {
+            reverse_vector(digits);
+            digits.push_back('0');
+            reverse_vector(digits);
+            digit++;
+        }
+        digits[digit]++;
+    }
     return (*this);
 }
 
 BigInteger& BigInteger::operator --() {
-    (*this) -= 1;
+    if (sign || (digits.size() == 1 && digits[0] == '0')) {
+        sign ^= true;
+        ++(*this);
+        sign ^= true;
+    } else {
+        if (digits.size() == 1 && digits[0] == '0')
+            return (*this = -1);
+        int digit = digits.size() - 1;
+        while (digit > 0 && digits[digit] == '0')
+            digits[digit--] = '9';
+        digits[digit]--;
+    }
     return (*this);
 }
 
@@ -165,7 +191,7 @@ bool BigInteger::operator !=(const BigInteger& other) const {
 std::string BigInteger::toString() {
     std::string result = (sign) ? "-" : "";
     for (const auto& digit : digits)
-        result += digit;
+        result.push_back(digit);
     return result;
 }
 
@@ -251,11 +277,9 @@ BigInteger BigInteger::subtraction(BigInteger A, BigInteger B) {
         while (it < C.digits.size() && A.digits[it] == '0')
             ++it;
         A.digits[i] += 10;
-        A.digits[it] -= 1; it--;
-        while (it != i) {
-            A.digits[it] = '9';
-            it--;
-        }
+        A.digits[it--] -= 1;
+        while (it != i)
+            A.digits[it--] = '9';
         C.digits[i] = A.digits[i] - B.digits[i] + '0';
     }
     reverse_vector(C.digits);
@@ -286,7 +310,7 @@ BigInteger BigInteger::multiplication(BigInteger A, BigInteger B) {
         reverse_vector(A.digits);
         reverse_vector(B.digits);
     }
-    int m = static_cast<int>(A.digits.size() / 2);
+    int m = static_cast<int>(A.digits.size() >> 1);
     BigInteger A1, A0, B1, B0;
     A1.convert(A.toString().substr(0, m)); remove_zeroes(A1);
     A0.convert(A.toString().substr(m, m)); remove_zeroes(A0);
@@ -296,7 +320,7 @@ BigInteger BigInteger::multiplication(BigInteger A, BigInteger B) {
     BigInteger C2 = multiplication(A1, B1);
     BigInteger C3 = multiplication(addition(A0, A1), addition(B0, B1));
     C3 = subtraction(C3, addition(C1, C2));
-    mult_power(C2, m * 2);
+    mult_power(C2, m << 1);
     mult_power(C3, m);
     BigInteger C = addition(addition(C1, C2), C3);
     remove_zeroes(C);
