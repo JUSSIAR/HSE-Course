@@ -49,12 +49,3 @@ Circle Triangle::inscribedCircle() const {
     double res_radius = (2 * _area) / (_perim);
     return Circle(res_center, res_radius);
 }
-
-std::ostream& operator<<(std::ostream& os, const Triangle& t) {
-    Triangle copy(t);
-    os << '[';
-    for (int i = 0; i < 3; i++)
-        os << '{' << copy.vertList[i].x << ' ' << copy.vertList[i].y << "} ";
-    os << ']' << std::endl;
-    return os;
-}

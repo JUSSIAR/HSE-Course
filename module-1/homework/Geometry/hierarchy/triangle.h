@@ -12,6 +12,5 @@ class Triangle : public Polygon {
 
         Circle circumscribedCircle() const;
         Circle inscribedCircle() const;
-
-        friend std::ostream& operator<<(std::ostream& o, const Triangle&t);
+        
 };
