@@ -36,3 +36,14 @@ add_executable(geometry tests.cpp)
 target_link_libraries(geometry LINK_PUBLIC hierarchy gtest_main)
 
 add_test(NAME geometry_test COMMAND geometry)
+
+target_compile_features(geometry PUBLIC cxx_std_20)
+target_compile_options(geometry PUBLIC -Wall -Wextra -Wshadow -Wconversion)
+
+option(ENABLE_SANITIZERS OFF)
+if(ENABLE_SANITIZERS)
+  add_library(sanitizers INTERFACE)
+  target_compile_options(sanitizers INTERFACE -fsanitize=address,undefined,leak)
+  target_link_options(sanitizers INTERFACE -fsanitize=address,undefined,leak)
+  target_link_libraries(geometry PUBLIC sanitizers)
+endif()
